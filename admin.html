@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        google.script.run.withSuccessHandler(displayBody).emailAdmins();
+    })
+    
+    </script>
+  </head>
+  <body>
+    <div id="courses"></div>
+  </body>
+  <script>
+  function displayBody(obj) {
+      var data = JSON.parse(obj);
+      console.log(data);
+      
+      console.log(data.length);
+      for(var i=0;i<data.length;i++) {
+        for(var j=0; j<data[i].wkshps.length; j++) {
+        
+          if(data[i].wkshps[j].teachers.length > 0) {
+            $("#courses").append("<div id='" + data[i].school + "'><h1>" + data[i].school + "</h1></div>");
+            $("#" + data[i].school).append("<li>" + data[i].wkshps[j].title + "</li>"); 
+          } 
+        }
+      } 
+    }
+    </script>
+</html>
+
+

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+<head>
+		<base target="_top">
+		<title>Elkhart EdTech PD</title>
+		<meta name="description" content="Check registrations and register for PD with Elkhart Ed Tech." />
+		<?!= include('style') ?>
+				<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+				<script>
+						// from https://developers.google.com/apps-script/guides/html/communication#forms
+						// Prevent forms from submitting.
+						function preventFormSubmit() {
+								var forms = document.querySelectorAll('form');
+								for (var i = 0; i < forms.length; i++) {
+										forms[i].addEventListener('submit', function(event) {
+												event.preventDefault();
+										});
+								}
+						}
+						window.addEventListener('load', preventFormSubmit);
+
+						function cancelClass(formObject) {
+								google.script.run.cancelRegistration(formObject);
+								$(formObject).closest('.row').toggleClass('hide');
+						}
+
+
+						// Callback function after server success, display confirmation message
+						function displayResult(msg) {
+                          $("input").attr("disabled", false);
+                          $("#toast").empty().append("<h2>Thank You</h2><ul><ul>");
+                          for(var i=0; i<msg.length; i++) {
+                            $("#toast > ul").append("<li>" + msg[i] + "</li>");
+                          }
+                          $("#toast").append("You may refresh the page to see your registrations or close the window if you're done.");
+						}
+				</script>
+				<script>
+						// Populate the school list select menu from an array
+						function buildSchoolList() {
+								var schools = ["Beardsley", "Beck", "Bristol", "Cleveland", "Daly", "Eastwood", "Feeser", "Hawthorne", "Monger", "Osolo", "Pinewood", "Riverview", "Roosevelt", "Woodland", "North Side", "Pierre Moran", "West Side", "Elkhart Academy",
+										"Central", "Memorial", "EACC", "Community Education", "PACE", "Administration", "Services", "Transportation"
+								];
+								var sorted = schools.sort();
+								var opt = '';
+
+								for (var i = 0; i < sorted.length; i++) {
+										opt += '<option value="' + sorted[i] + '">' + sorted[i] + '</option>'
+								}
+								$("#bldg").append(opt);
+						}
+				</script>
+</head>
+
+<body>
+		<div id="body-wrap">
+
+				<div id="toast-wrap" class="hide">
+						<div id="toast">
+								<p>Submitting...</p>
+						</div>
+				</div>
+                <div id="col-left">
+				<div id="filters">
+						<h1>Filters</h1>
+						<form name="filter-form" id="filter-form" action="" method="">
+								<!-- <input type="radio" name="filterStatus" value="" checked="checked" />
+								<label for="filter3">All</label>
+								<input type="radio" name="filterStatus" value="Online" />
+								<label for="filter1">Online</label>
+								<input type="radio" name="filterStatus" value="In Person" />
+								<label for="filter2">In Person</label>
+								<hr /> -->
+								<div id="dan-filters">
+                               <!-- <div class="filter-container" id="aud">
+                                    <h2 class="header">Audience<img src="https://image.flaticon.com/icons/svg/60/60995.svg" class="arrow"/></h2>
+                                    <div id="audience" class="content">
+                                       <label><input type="checkbox" name="filterStatus" value="Administrators" />Administrators</label>
+                                       <label><input type="checkbox" name="filterStatus" value="Teachers" />Teachers</label>
+                                       <label><input type="checkbox" name="filterStatus" value="Social Workers" />Social Workers</label>
+                                       <label><input type="checkbox" name="filterStatus" value="Paraprofessionals" />Paraprofessionals</label>
+                                       <label><input type="checkbox" name="filterStatus" value="Secretarial Staff" />Secretarial Staff</label>
+                                       <label><input type="checkbox" name="filterStatus" value="Substitutes" />Substitutes</label>
+                                    </div> 
+                                 
+                                </div> -->
+										<div class="filter-container" id="dom1">
+												<h2 class="header">Domain 1<img src="https://image.flaticon.com/icons/svg/60/60995.svg" class="arrow"/></h2>
+												<div class="content" id="danDom1">
+														<label><input name='filterStatus' type='checkbox' value='1a' />1a Demonstrating Knowledge of Content and Pedagogy</label>
+														<label><input name='filterStatus' type='checkbox' value='1b' />1b Demonstrating Knowledge of Students</label>
+														<label><input name='filterStatus' type='checkbox' value='1c' />1c Setting Instructional Outcomes</label>
+														<label><input name='filterStatus' type='checkbox' value='1d' />1d Demonstrating Knowledge of Resources</label>
+														<label><input name='filterStatus' type='checkbox' value='1e' />1e Designing Coherent Instruction</label>
+														<label><input name='filterStatus' type='checkbox' value='1f' />1f Designing Student Assessments</label>
+												</div>
+												<!-- end .content #danDom1 -->
+										</div>
+										<!-- end .filter-container #dom1 -->
+										<div class="filter-container" id="dom2">
+												<h2 class="header">Domain 2<img src="https://image.flaticon.com/icons/svg/60/60995.svg" class="arrow"/></h2>
+												<div class="content" id="danDom2">
+														<label><input name='filterStatus' type='checkbox' value='2a' />2a Creating an Environment of Respect and Report</label>
+														<label><input name='filterStatus' type='checkbox' value='2b' />2b Establishing a culture for Learning</label>
+														<label><input name='filterStatus' type='checkbox' value='2c' />2c Managing Classroom Procedures</label>
+														<label><input name='filterStatus' type='checkbox' value='2d' />2d Managing Student Behavior</label>
+														<label><input name='filterStatus' type='checkbox' value='2e' />2e Organizing Physical Space</label>
+												</div>
+												<!-- end .content #danDom2 -->
+										</div>
+										<!-- end .filter-container #dom2 -->
+										<div class="filter-container" id="dom3">
+												<h2 class="header">Domain 3<img src="https://image.flaticon.com/icons/svg/60/60995.svg" class="arrow"/></h2>
+												<div class="content" id="danDom3">
+														<label><input name='filterStatus' type='checkbox' value='3a' />3a Communicating with Students</label>
+														<label><input name='filterStatus' type='checkbox' value='3b' />3b Using Questioning and Discussion Techniques</label>
+														<label><input name='filterStatus' type='checkbox' value='3c' />3c Engaging Students in Learning</label>
+														<label><input name='filterStatus' type='checkbox' value='3d' />3d Using Assessment in Instruction</label>
+														<label><input name='filterStatus' type='checkbox' value='3e' />3e Demonstrating Flexibility and Responsiveness</label>
+												</div>
+												<!-- end .content #danDom3 -->
+										</div>
+										<!-- end .filter-content #dan3 -->
+										<div class="filter-container" id="dom4">
+												<h2 class="header">Domain 4<img src="https://image.flaticon.com/icons/svg/60/60995.svg" class="arrow"/></h2>
+												<div id="danDom4" class="content">
+														<label><input name='filterStatus' type='checkbox' value='4a' />4a Reflecting on Teaching</label>
+														<label><input name='filterStatus' type='checkbox' value='4b' />4b Maintaining Accurate Records</label>
+														<label><input name='filterStatus' type='checkbox' value='4c' />4c Communicating with Families</label>
+														<label><input name='filterStatus' type='checkbox' value='4d' />4d Participating in the Professional Community</label>
+														<label><input name='filterStatus' type='checkbox' value='4e' />4e Growing and Developing Professionally</label>
+														<label><input name='filterStatus' type='checkbox' value='4f' />4f Showing Professionalism</label>
+												</div>
+												<!-- end .content #danDom4 -->
+										</div>
+										<!-- end .filter-container #dan4 -->
+								</div>
+                                
+								<!-- end #dan-filters -->
+						</form>
+                                        
+				</div>
+				<!-- end filters -->
+                <div id="form-submit">
+                  <label for="submit-form">Register</label>
+                </div>
+                </div>
+				<div id="col-right">
+
+						<div id="user">
+
+								<div id="user-meta">
+										<h1>Current User:</h1>
+										<p>
+												<?= Session.getActiveUser().getEmail(); ?>
+										</p>
+								</div>
+								<!-- end #user-meta -->
+								<hr />
+
+								<div id="reg">
+										<h1>Your Registrations</h1>
+
+										<!-- Style user registered courses -->
+										<div id="courses"></div>
+										<!-- end #courses -->
+
+								</div>
+								<!-- end #reg -->
+						</div>
+						<!-- end #user -->
+
+						<div id="workshops">
+								<h1>Upcoming Workshops</h1>
+								<p>To register for a workshop, fill in your name information and then click on the button next to each session title. Click <b>Register</b> when you're finished.</p>
+
+								<div id="form">
+
+										<form id="classSignup" class="noSubmit" onsubmit="validateForm(this)">
+												<input id="email" name="email" type="hidden" value="<?= Session.getActiveUser().getEmail(); ?>" />
+												<input id="first" name="first" type="text" onfocus="this.value=''" value="First Name" required />
+												<input id="last" name="last" type="text" onfocus="this.value=''" value="Last Name" required />
+												<select id="bldg" name="building"></select>
+
+												<input type="submit" id="submit-form" class="hide" value="Register" />
+
+												<div id="list"></div>
+										</form>
+								</div>
+								<!-- end #form -->
+						</div>
+						<!-- end #workshops -->
+				</div>
+				<!-- end #col-right -->
+		</div>
+		<!-- end #body-wrap -->
+		<script>
+        
+        var codes = [];
+				$(document).ready(function() {
+
+						// Immediately build the list of schools for the dropdown.
+						// Does this need to be a function...?
+						buildSchoolList();
+
+						// Poll the server for current user registrations
+						google.script.run.withSuccessHandler(showClasses).getWorkshops();
+						
+						// Display the result
+						function showClasses(returnObj) {
+								
+								var data = JSON.parse(returnObj);
+								// Get the user registrations 
+                                
+                                console.log(data);
+                                
+								if (data.usrRegIds.length == 0) {
+										$("#courses").append("<div class='row'><p>No registrations</p></div>");
+								} 
+								else {
+										for (var i = 0; i < data.usrRegIds.length; i++) {
+												$("#courses").append("<div class='row'><span class='date'>" + data.usrRegIds[i].date + "</span><span class='time'>" + data.usrRegIds[i].time + "</span><span class='title'>" + data.usrRegIds[i].title +
+														"</span><form id='cancel' class='noSubmit' onsubmit='cancelClass(this);'><input type='hidden' name='class' value='" + data.usrRegIds[i].hash + "' /><input id='testing" + i +
+														"' type='submit' value='Cancel'></input></form><span class='cancel hide'>Cancelled</span></div>");
+										}
+								}
+
+								var today = new Date();
+								for (var j = 0; j < data.allSessions.length; j++) {
+                                                                        
+										$("#list").append("<div class='row' id='" + data.allSessions[j].hash + "'><span class='time'>" + data.allSessions[j].time + "</span><span class='date'>" + data.allSessions[j].date + ", </span><input type='checkbox' name='wkshp' value='" +
+												data.allSessions[j].hash + "'/><span class='title'>" + data.allSessions[j].title + "</span><span class='desc'>" + data.allSessions[j].desc + "</span><div class='meta'><span class='loc'>" +
+												data.allSessions[j].location + "</span> | <span class='who'>" + data.allSessions[j].who + "</span> | <span class='cat'>" + data.allSessions[j].cat +  "</span> | <span class='type'>" + data.allSessions[j].type + "</span> | <span class='seats'>Seats: " + data.allSessions[j].seats +
+												"</span></div><div class='reg-code lock hide'><h2>Registration Code</h2><input type='text' name='code' value='' /></div>");
+										if (today.setHours(0, 0, 0, 0) > new Date(data.allSessions[j].date) && new Date(data.allSessions[j].date) != today) {
+                                                $("#" + data.allSessions[j].hash).addClass("hide");
+										}
+										if (data.allSessions[j].lock === "Yes") {
+												$('#' + data.allSessions[j].hash).find(".lock").removeClass("hide");
+                                                codes.push({
+                                                  id: data.allSessions[j].hash,
+                                                  code: data.allSessions[j].code
+                                                })
+										}
+                                        if(data.allSessions[j].desc.match(/<\/a>/ig)) {
+                                                console.log($(this).closest(".row"));
+                                                $('#' + data.allSessions[j].hash).find("input:checkbox").css('opacity','0');
+                                        }
+								}
+								preventFormSubmit();
+						}
+				})
+                
+               
+				// Filters
+				$("input[name='filterStatus']").change(function() {
+						var classes = [];
+
+						$("input[name='filterStatus']").each(function() {
+								if ($(this).is(':checked')) {
+										classes.push($(this).val())
+								}
+						})
+                        
+                        console.log(classes);
+                        
+						if (classes == "") {
+								$("#list .row").show();
+						} else {
+								$("#list .row").hide()
+
+								$("#list .row").each(function() {
+										var filter = [];
+										var show = false;
+										var row = $(this);
+										
+//                                        console.log(type.includes(classes[0]));
+//                                        console.log(classes);
+
+										filter = row.find('.cat').html().split(",");
+                                        //filter.push(row.find('.type').html());
+//                                        cat.push(row.find('.who').html());
+//                                        console.log(cat);
+                                        
+                                        var who = [];
+                                        //filter.push(row.find('.who').html());
+                                        //console.log(who);
+                                        console.log(filter);
+
+										for(var n=0; n<classes.length;n++) {
+                                          console.log(classes[n]); // set show if true.
+                                          if(filter.includes(classes[n])){
+                                            show = true;
+                                          }
+                                        } 
+                                        
+												
+										if (show) {
+												row.show()
+										}
+								})
+                                }
+                                })
+					
+				
+                
+                // Hide filters, display on click
+				$(".header").click(function() {
+						$header = $(this);
+						$content = $header.next();
+
+						$content.slideToggle(500);
+                        
+                        $arrow = $header.find(".arrow");
+                        $arrow.toggleClass("rotate");
+				})
+                
+                // Validate registration code
+                $("body").on("keyup",".lock :input", function() {
+                  var row = $(this).closest('.row').prop('id');
+                  var key = $(this).val();
+                                    
+                  for(var key in codes) {
+                    if(codes[key].id === row) {
+                      if(codes[key].code === $(this).val()) {
+                        $(this).css('background-color','rgba(0,255,0,0.4)');
+                      }
+                      else {
+                        $(this).css('background-color', 'white');
+                      }
+                    }
+                  }
+                });
+
+                
+                       function validateForm(formObject) {
+                                                
+                          var array = [];
+                          
+                          // Build the array of workshops and submitted codes
+                          $('#classSignup :checkbox:checked').each(function(i) {
+                              var input = $(this).parent().find('.lock :input');
+                              
+                              if(input.hasClass('hide') || input.val() == "") {
+                                console.log('Has the class .hide, setting the value');
+                                input.val('Code');
+                              }
+                            });
+                                                        
+                            google.script.run.withSuccessHandler(displayResult).recordData(formObject);
+								$("form").attr("disabled", "disabled");
+								$("#toast-wrap").toggleClass("hide");                 
+                           }
+
+		</script>
+</body>
+
+</html>
