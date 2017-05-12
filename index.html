@@ -39,7 +39,7 @@
 						// Populate the school list select menu from an array
 						function buildSchoolList() {
 								var schools = ["Beardsley", "Beck", "Bristol", "Cleveland", "Daly", "Eastwood", "Feeser", "Hawthorne", "Monger", "Osolo", "Pinewood", "Riverview", "Roosevelt", "Woodland", "North Side", "Pierre Moran", "West Side", "Elkhart Academy",
-										"Central", "Memorial", "EACC", "Community Education", "PACE", "Administration", "Services", "Transportation"
+										"Central", "Memorial", "EACC", "Community Education", "PACE", "Administration", "Services", "Transportation", "School Without Walls"
 								];
 								var sorted = schools.sort();
 								var opt = '';
@@ -60,7 +60,23 @@
 								<p>Submitting...</p>
 						</div>
 				</div>
+                <div id="cal-wrap" class="hide">
+                        <div id="cal-subscribe">
+                          <a href="https://calendar.google.com/calendar/embed?src=elkhart.k12.in.us_j2gh78bk5e5bje6n6k19ijr2j8%40group.calendar.google.com&ctz=America/New_York" target="_blank">Click here to view the Calendar</a>
+                          <h1 style="text-align:center;">OR</h1>
+                          <p>To subscribe to the Professional Development Calendar, copy the following link:</p>
+                          <input type="text" value="elkhart.k12.in.us_j2gh78bk5e5bje6n6k19ijr2j8@group.calendar.google.com" onclick="this.focus(),this.select()" />
+                          <p>Paste the link into your Google Calendar to subscribe.</p>
+                          <video autoplay loop muted>
+                            <source src="https://ohheybrian.com/media/calendar.mp4" type="video/mp4" />
+                          </video>
+                          <p id="close-handler" onclick="$('#cal-wrap').addClass('hide')">Close Window</p>
+                        </div>
+                </div>
                 <div id="col-left">
+                  <div id="cal-link">
+                    <img src="https://ohheybrian.com/images/calThumb.png" onclick="$('#cal-wrap').removeClass('hide');"/>
+                  </div>
 				<div id="filters">
 						<h1>Filters</h1>
 						<form name="filter-form" id="filter-form" action="" method="">
@@ -154,6 +170,8 @@
 										<p>
 												<?= Session.getActiveUser().getEmail(); ?>
 										</p>
+                                        <a class="admin hide" href="https://script.google.com/a/macros/elkhart.k12.in.us/s/AKfycbyD9fEPCNtt50RMXNFEVoBQpsOjvTcBh2AKsiJiiZ5I/dev?page=admin.html">Admin Dash</a>
+                                        <a class="presenter hide" href="https://script.google.com/a/macros/elkhart.k12.in.us/s/AKfycbyD9fEPCNtt50RMXNFEVoBQpsOjvTcBh2AKsiJiiZ5I/dev?page=presenter.html">Presenters</a>
 								</div>
 								<!-- end #user-meta -->
 								<hr />
@@ -178,9 +196,11 @@
 
 										<form id="classSignup" class="noSubmit" onsubmit="validateForm(this)">
 												<input id="email" name="email" type="hidden" value="<?= Session.getActiveUser().getEmail(); ?>" />
-												<input id="first" name="first" type="text" onfocus="this.value=''" value="First Name" required />
-												<input id="last" name="last" type="text" onfocus="this.value=''" value="Last Name" required />
-												<select id="bldg" name="building"></select>
+												<input id="first" name="first" type="text" onfocus="this.value=''" placeholder="First Name" required />
+												<input id="last" name="last" type="text" onfocus="this.value=''" placeholder="Last Name" required />
+												<select id="bldg" name="building" >
+                                                  <option value="" disabled selected hidden>Building Assignment</option>
+                                                </select>
 
 												<input type="submit" id="submit-form" class="hide" value="Register" />
 
@@ -205,21 +225,41 @@
 
 						// Poll the server for current user registrations
 						google.script.run.withSuccessHandler(showClasses).getWorkshops();
+                        
+                        // Check if user is admin
+                        var user = JSON.stringify(<? Session.getActiveUser().getEmail() ?>);
+                        google.script.run.withSuccessHandler(showAdmin).checkAdmin();
+                        
+                        google.script.run.withSuccessHandler(showPresenter).checkPresenter();
 						
+                        function showAdmin(user) {
+                          if(user) {
+                            $(".admin").removeClass("hide");
+                          }
+                        }
+                        
+                        function showPresenter(user) {
+                          if(user) {
+                            $(".presenter").removeClass("hide");
+                          } else {
+                            return;
+                          }
+                        }
+                        
 						// Display the result
 						function showClasses(returnObj) {
 								
 								var data = JSON.parse(returnObj);
 								// Get the user registrations 
                                 
-                                console.log(data);
+                                console.log(data.allSessions);
                                 
 								if (data.usrRegIds.length == 0) {
 										$("#courses").append("<div class='row'><p>No registrations</p></div>");
 								} 
 								else {
 										for (var i = 0; i < data.usrRegIds.length; i++) {
-												$("#courses").append("<div class='row'><span class='date'>" + data.usrRegIds[i].date + "</span><span class='time'>" + data.usrRegIds[i].time + "</span><span class='title'>" + data.usrRegIds[i].title +
+												$("#courses").append("<div class='row'><span class='time'>" + data.usrRegIds[i].time + "</span><span class='title'>" + data.usrRegIds[i].title +
 														"</span><form id='cancel' class='noSubmit' onsubmit='cancelClass(this);'><input type='hidden' name='class' value='" + data.usrRegIds[i].hash + "' /><input id='testing" + i +
 														"' type='submit' value='Cancel'></input></form><span class='cancel hide'>Cancelled</span></div>");
 										}
@@ -228,7 +268,7 @@
 								var today = new Date();
 								for (var j = 0; j < data.allSessions.length; j++) {
                                                                         
-										$("#list").append("<div class='row' id='" + data.allSessions[j].hash + "'><span class='time'>" + data.allSessions[j].time + "</span><span class='date'>" + data.allSessions[j].date + ", </span><input type='checkbox' name='wkshp' value='" +
+										$("#list").append("<div class='row' id='" + data.allSessions[j].hash + "'><span class='time'>" + data.allSessions[j].time + "</span><input type='checkbox' name='wkshp' value='" +
 												data.allSessions[j].hash + "'/><span class='title'>" + data.allSessions[j].title + "</span><span class='desc'>" + data.allSessions[j].desc + "</span><div class='meta'><span class='loc'>" +
 												data.allSessions[j].location + "</span> | <span class='who'>" + data.allSessions[j].who + "</span> | <span class='cat'>" + data.allSessions[j].cat +  "</span> | <span class='type'>" + data.allSessions[j].type + "</span> | <span class='seats'>Seats: " + data.allSessions[j].seats +
 												"</span></div><div class='reg-code lock hide'><h2>Registration Code</h2><input type='text' name='code' value='' /></div>");

@@ -1,34 +1,45 @@
 <!DOCTYPE html>
+<!-- Administrator portal to see staff registrations. Linked to 
+     admin array in the sheet. -->
 <html>
   <head>
     <base target="_top">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
     <script>
     $(document).ready(function() {
-        google.script.run.withSuccessHandler(displayBody).emailAdmins();
+        google.script.run.withSuccessHandler(displayBody).adminDash();
     })
     
     </script>
+    <?!= include('style') ?>
   </head>
   <body>
-    <div id="courses"></div>
+    <div id="admin-wrap">
+      <div id="admin-col-left"></div>
+      <div id="admin-col-right"><h2>Quick Look</h2><hr />
+            <a href="https://script.google.com/a/macros/elkhart.k12.in.us/s/AKfycbyD9fEPCNtt50RMXNFEVoBQpsOjvTcBh2AKsiJiiZ5I/exec">Back to PD Registration Site</a>
+      </div>
+    </div>
   </body>
   <script>
   function displayBody(obj) {
       var data = JSON.parse(obj);
-      console.log(data);
       
-      console.log(data.length);
-      for(var i=0;i<data.length;i++) {
-        for(var j=0; j<data[i].wkshps.length; j++) {
+      $("#admin-col-left").append("<div id='" + data[0].school + "'><h1>" + data[0].school + "</h1></div>");
+            
+      for(var j=0; j<data[0].wkshps.length; j++) {
         
-          if(data[i].wkshps[j].teachers.length > 0) {
-            $("#courses").append("<div id='" + data[i].school + "'><h1>" + data[i].school + "</h1></div>");
-            $("#" + data[i].school).append("<li>" + data[i].wkshps[j].title + "</li>"); 
-          } 
+      console.log(data[0].wkshps[j].teachers);
+        if(data[0].wkshps[j].teachers.length > 0) {
+          $("#" + data[0].school).append("<div id='" + data[0].wkshps[j].id + "'><span class='wkshp-title'><h2>" + data[0].wkshps[j].title + "</h2></span><span class='wkshp-date'>" + data[0].wkshps[j].date + "</span><ol class='list'></ol></div>");
+          for(var k in data[0].wkshps[j].teachers) {
+            console.log("Wkshp: " + data[0].wkshps[j].title + ", Teacher: " + data[0].wkshps[j].teachers[k]);
+            
+            $("#" + data[0].wkshps[j].id + " ol").append("<li>" + data[0].wkshps[j].teachers[k] + "</li>");
+          }
+        } 
         }
       } 
-    }
     </script>
 </html>
 

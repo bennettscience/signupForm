@@ -4,7 +4,7 @@ var SCRIPT_PROP = PropertiesService.getScriptProperties();
 
 var ss = SpreadsheetApp.openById(SCRIPT_PROP.getProperty("key"))
 
-var user = Session.getActiveUser().getEmail();
+var me = Session.getActiveUser().getEmail();
 
 /********************** SETUP ****************************/
 // Store the active sheet ID
@@ -41,7 +41,7 @@ function doGet(e) {
   }
   
   // else, use page parameter to pick an html file from the script
-  return HtmlService.createTemplateFromFile(e.parameter['page']).evaluate().setTitle("Admin Portal");
+  return HtmlService.createTemplateFromFile(e.parameter['page']).evaluate();
 }
 
 /********************** include **************************/
@@ -74,10 +74,8 @@ function recordData(formObject) {
     
     formObject.code = formObject.code.filter(Boolean);
     
-    Logger.log(formObject.wkshp);
     // condiditon if the class is not limited registration
     
-    Logger.log(typeof formObject.wkshp === "string");
     if(typeof formObject.wkshp === "string") {
 
       classes.push(formObject.wkshp);
@@ -88,12 +86,12 @@ function recordData(formObject) {
           
           if(classes[i] == sessions[j][12]) {
           
-          Logger.log("Matched " + classes[0] + " with " + sessions[j][12]);
-            Logger.log("The code needs to be: " + sessions[j][11] + ", the code was " + formObject.code);
           if(formObject.code == sessions[j][11]) {            
             
             var row = [new Date(), formObject[headers[1]], formObject[headers[2]], formObject[headers[3]], formObject[headers[4]], classes[0]];
             rows.push(row);
+            
+            sheet.getRange(nextRow,1,rows.length,6).setValues(rows);
             
             msg.push("Registration for " + sessions[j][3] + " was successful.");
             
@@ -102,43 +100,35 @@ function recordData(formObject) {
           }
         }
       }
-    } 
+    }
     } else {
-      Logger.log("The Object contains an array, open it and iterate");
           //First, split the codes into an array of strings
           for(var i=0; i<formObject.wkshp.length; i++) {
-            
-            Logger.log(formObject.wkshp);
-            Logger.log(formObject.code);
             
             for(var j=0; j<sessions.length; j++) {
               
               if(formObject.wkshp[i] == sessions[j][12]) {
-                
-                  Logger.log(sessions[j][12] + " needs a code, " + sessions[j][11]);
-                                  
-                  Logger.log("The session needs " + sessions[j][11] + ", it received " + formObject.code[i]);
+                                                  
                   if(formObject.code[i] == sessions[j][11]) {
                     
-                    Logger.log("They matched, pushing to the sheet");
                     var row = [new Date(), formObject[headers[1]], formObject[headers[2]], formObject[headers[3]], formObject[headers[4]], formObject.wkshp[i]]
                     rows.push(row);
                     msg.push("Registration for " + sessions[j][3] + " was successful.");
                   } else {
-                    Logger.log("It didn't match. Needed " + sessions[j][11] + " and got " + formObject.code[i]);
                     msg.push("<p class='err'>The registration code for <b>" + sessions[j][3] + "</b> is incorrect. Please try again.</p>");
                   }
                 }
               }
             }
           } 
+      // calInvite(rows);
       for(var i=0; i<rows.length;i++) {
         sheet.getRange(nextRow,1,rows.length,6).setValues(rows);
       }
+      calInvite(rows);
     return msg;
   }
   catch(msg) {
-    Logger.log(msg);
     return msg;
   } 
   finally {
@@ -181,7 +171,7 @@ function cancelRegistration(formObject) {
   var data = sheet.getDataRange().getValues();
   
   for(var i=1; i<data.length;i++) {
-    if(data[i][1].toString() == user) {
+    if(data[i][1].toString() == me) {
       for(var j=0;j<data[i].length;j++) {
        // Logger.log(formObject[headers[j]]);
         var formDate = formObject.class;
@@ -287,6 +277,8 @@ function getWorkshops() {
   // Get the entire workshop list from the spreadsheet and store in an array
   var allSessionsData = sheet.getRange(2,2,sheet.getLastRow()-1, sheet.getLastColumn()).getValues();
   
+//  Logger.log(allSessionsData);
+  
   // Array to hold user registration objects
   var usrRegs = [];
   
@@ -303,20 +295,21 @@ function getWorkshops() {
     for(var k=0; k<str.length;k++) {
       cats.push(str[k].substr(0,3).trim());
     }
-    Logger.log(cats);
+
     // Check for URLs in the registration description   
     var newText = val[4].replace(/((http|https)\:\/\/[a-zA-Z0-9\-\.\/]+[a-zA-Z])/g,'<a href="$1">$1</a>');
       
     // Comparitors
-     // var suffix = ((val[1].getHours()+11) % 12 + 1) >= 12 ? "PM":"AM";
-     var hours = (((val[0].getHours()+11) % 12 + 1));
-     var date = (val[0].getMonth()+1) + "/" + val[0].getDate() + "/" + val[0].getFullYear();
+     var theDate = new Date(val[0]);
+//     Logger.log(theDate.getMinutes());
+     var hours = ((theDate.getHours()+11) % 12 + 1);
+     var date = (theDate.getMonth()+1) + "/" + theDate.getDate() + "/" + theDate.getFullYear();
      var id = val[11];
          // Build the objects
      if(usrRegIds.indexOf(id) !== -1) {
         usrRegs.push({
-         date: date, 
-          time: hours + ":" + ('0'+val[1].getMinutes()).slice(-2),
+          date: theDate, 
+          time: theDate.toLocaleString(),
           title: val[2],
           desc: newText,
           cat: cats.toString(),
@@ -326,8 +319,8 @@ function getWorkshops() {
        });
      } else {
        allSessionsFiltered.push({
-         date: date,
-         time: hours + ":" + ('0'+val[1].getMinutes()).slice(-2),
+         date: theDate,
+         time: theDate.toLocaleString(),
          title: val[2],
          desc: newText,
          cat: cats,
@@ -344,8 +337,9 @@ function getWorkshops() {
   
   getRegCounts(allSessionsFiltered);
       
-  var returnObj = { usrRegIds: usrRegs.sort(function(a,b) { return new Date(a.date) - new Date(b.date) }), allSessions: allSessionsFiltered.sort(function(a,b) { return new Date(a.date) - new Date(b.date) }) }
-
+  var returnObj = { usrRegIds: usrRegs.sort(function(a,b) { return a.date - b.date }), allSessions: allSessionsFiltered.sort(function(a,b) { return a.date - b.date }) }
+  
+  Logger.log(returnObj);
   return JSON.stringify(returnObj);
 }
 
@@ -369,18 +363,47 @@ function pushToCalendar() {
   
   Logger.log(data[0][3] + " " + new Date(data[0][1]) + " " + new Date(data[0][2]));
   
-  cal.createEvent(title, start, end, {location: loc, description: desc})
+  cal.createEvent(title, start, end, {location: loc, description: desc, sendInvites: true})
 }
 
-/*************************** EMAIL ADMIN *****************************/
-// Send a monthly update email to principals with teachers who
-// have completed trainin
+/*************************** CHECK IF ADMIN *************************/
+// Check for the user account against the admin roster
+// return true
+/********************************************************************/
+
+function checkAdmin() {
+  var user = Session.getActiveUser().getEmail();
+  var adminSheet = ss.getSheetByName('admins');
+  var adminData = adminSheet.getRange(1,5,adminSheet.getLastRow(),1).getValues();
+
+  if(adminData.toString().indexOf(user) > -1) {
+    Logger.log(true);
+    return true;
+  }
+}
+
+function checkPresenter() {
+  var user = Session.getActiveUser().getEmail();
+  var allSessions = ss.getSheetByName('allSessions');
+  var sessionsData = allSessions.getRange(2, 14, allSessions.getLastRow(), 1).getValues();
+  
+  Logger.log(sessionsData);
+  
+  if(sessionsData.toString().indexOf(user) > -1) {
+    Logger.log(true);
+    return true;
+  } else {
+    Logger.log(false);
+    return false;
+  }
+}
+
+/*************************** ADMIN DASH *****************************/
+// Build an Admin Dashboard
 // return Object {}
 /*********************************************************************/
 
-function emailAdmins() {
-  var me = Session.getEffectiveUser().getEmail();
-  
+function adminDash() {  
   var regData = ss.getSheetByName('allRegs').getDataRange().getValues();
   var adminData = ss.getSheetByName('admins').getDataRange().getValues();
   var sessionData = ss.getSheetByName('allSessions').getDataRange().getValues();
@@ -397,7 +420,8 @@ function emailAdmins() {
   Logger.log(sessions);
   
   for(var j=0;j<sessionData.length;j++) {
-    sessions[0].wkshps.push({"id":sessionData[j][12], "title":sessionData[j][3],"teachers":[]})
+    var date = new Date(sessionData[j][1]);
+    sessions[0].wkshps.push({"id":sessionData[j][12], "date":(date.getMonth() +1) + "/" + date.getDate() + "/" + date.getFullYear(), "title":sessionData[j][3],"teachers":[]})
   }
   
   for(var k=0; k<regData.length;k++) {
@@ -412,55 +436,66 @@ function emailAdmins() {
   return JSON.stringify(sessions);
 }
 
-/*************************** EMAIL REMINDERS ************************************/
-// return Object email
+/*************************** CALENDAR REMINDER **********************************/
+// Find the session and match to a Calendar Event.
+// Invite the registrant to the event via GAS API
 /********************************************************************************/
 
-function emailReminders() {
-// Get the data and compare to today
-  var data = sheet.getSheetByName("allRegs").getDataRange().getValues();
-  var today = new Date();
-  var monday = new Date();
-  monday.setDate(monday.getDate(monday) + 4);
-  
-  var stringMonday = (monday.getMonth() +1) + "/" + monday.getDate() + "/" + monday.getFullYear();
-  
-  var emails = [];
+//function calInvite(sessions) {
+//  var regData = ss.getSheetByName('allRegs').getDataRange().getValues();
+//  var allSessions = ss.getSheetByName('allSessions').getDataRange().getValues();
+//  
+//  var calId = CalendarApp.getCalendarById('elkhart.k12.in.us_j2gh78bk5e5bje6n6k19ijr2j8@group.calendar.google.com');
+//  
+////  Logger.log(sessions);
+//  
+//  for(var i=0; i<sessions.length; i++) {
+//    for(var j=0; j<allSessions.length; j++) {
+//      var date = new Date(allSessions[j][1]);
+//      var stringDate = (date.getMonth()+1) + "/" + date.getDate() + "/" + date.getFullYear();
+//      if(allSessions[j][12] == sessions[i][5]) {
+//        sessions[i].push(allSessions[j][1], allSessions[j][3]);
+//      }
+//    }
+//    var events = calId.getEventsForDay(sessions[i][6], {search: sessions[i][7] });
+//    events[i].addGuest(sessions[i][1]).addEmailReminder(60);
+//  }      
+//}
 
-// Loop through each row and find the following Monday
-  for(var i=1;i<data.length;i++) {
-    var array = [];
-    array.push(data[i][1]);
-    for(var j=5;j<data[i].length;j++) {
-      if(data[i][j] == "") {
-        break;
-      } else { 
-        array.push(data[i][j]);
-      }
+/*************************** PRESENTER PORTAL **********************************/
+// Get the logged-in presenter's session information
+// Display on a hidden page.
+/********************************************************************************/
+
+function presenterDash() {
+  var me = Session.getActiveUser().getEmail();
+  var allSessions = ss.getSheetByName('allSessions').getDataRange().getValues();
+  
+  var sessions = [];
+  
+  // get sessions I present
+  for(var i=0; i<allSessions.length;i++) {
+    if(allSessions[i][13].toString() == me) {
+      var date = new Date(allSessions[i][1]);
+      sessions.push({
+        id: allSessions[i][12],
+        title: allSessions[i][3],
+        date: (date.getMonth() +1) + "/" + date.getDate() + "/" + date.getFullYear(),
+        teachers: []
+      });
     }
-    for(var d=1;d<array.length;d++) {
-      //Logger.log(array[0]);
-      if(array[d] == stringMonday) {
-        emails.push(array[0]);
+  }
+  
+  var allRegs = ss.getSheetByName('allRegs').getDataRange().getValues();
+  
+  // get the teachers for each sessions
+  for(var i=0; i<sessions.length; i++) {
+    for(var j=0; j<allRegs.length; j++) {
+      if(allRegs[j][5] == sessions[i].id) {
+        sessions[i].teachers.push(allRegs[j][2] +  " " + allRegs[j][3]);
       }
     }
   }
-    
-  Logger.log(emails);
-    
-  for(var e=0;e<emails.length;e++) {
-    var message = {
-          to: emails[e],
-          replyTo: "instructional-tech@elkhart.k12.in.us",
-          subject: "Monday workshop reminder",
-          htmlBody: 
-               "<p>This is a reminder that you are scheduled for a workshop Monday afternoon at the administration building.</p>" +
-               "<p>If you cannot make the class, please <a href='https://script.google.com/a/macros/elkhart.k12.in.us/s/AKfycby3BrJ2zIvH51edgSRNaVnv-NWdJW8aiUl_GTAoyDhlku54WRk/exec'>cancel your registration on the signup website</a>.</p>" +
-               "<p>If you have questions, you can email <a href='mailto:instructional-tech@elkhart.k12.in.us'>instructional-tech@elkhart.k12.in.us</a>.</p>" +
-               "<p>Thanks, and we'll see you on Monday,</p>" +
-               "<p>Brian, Kat, & Wes</p>"
-          }
-    MailApp.sendEmail(message);
-    }
+  return JSON.stringify(sessions);
+  
 }
- 
